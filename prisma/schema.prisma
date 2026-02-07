@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum DeviceStatus {
+  Active
+  Maintenance
+  Offline
+}
+
+enum EmployeeRole {
+  Manager
+  Admin
+  Cashier
+}
+
+enum EmployeeStatus {
+  Active
+  Inactive
+}
+
+enum PaymentStatus {
+  Paid
+  Pending
+  Failed
+}
+
+enum SessionMode {
+  open
+  timed
+}
+
+enum PaymentMethod {
+  cash
+  qris
+  debt
+}
+
+enum TransactionType {
+  Rental
+  Snack
+  Expense
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        EmployeeRole @unique
+  permissions Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model DeviceType {
+  id              String   @id @default(cuid())
+  name            String
+  code            String   @unique
+  hourlyRate      Int
+  serviceInterval Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Device {
+  id        String          @id @default(cuid())
+  name      String
+  model     String
+  status    DeviceStatus
+  rate      Int
+  service   DateTime
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  sessions  RentalSession[]
+}
+
+model Snack {
+  id                String            @id @default(cuid())
+  sku               String            @unique
+  name              String
+  category          String
+  sellPrice         Int
+  costPrice         Int
+  stockOnHand       Int
+  lowStockThreshold Int
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  orderItems        RentalOrderItem[]
+}
+
+model Employee {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  username      String          @unique
+  role          EmployeeRole
+  status        EmployeeStatus  @default(Active)
+  lastLogin     DateTime?
+  passwordHash  String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  authSessions  AuthSession[]
+  rentalSessions RentalSession[]
+  transactions  Transaction[]
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  name      String
+  status    PaymentStatus
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  employeeId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+model RentalSession {
+  id             String          @id @default(cuid())
+  deviceId       String
+  employeeId     String?
+  mode           SessionMode
+  ratePerHour    Int
+  startAt        DateTime
+  durationMinutes Int?
+  endAt          DateTime?
+  stoppedAt      DateTime?
+  completedAt    DateTime?
+  paymentMethod  PaymentMethod?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  device      Device            @relation(fields: [deviceId], references: [id])
+  employee    Employee?         @relation(fields: [employeeId], references: [id])
+  orders      RentalOrderItem[]
+  transactions Transaction[]
+}
+
+model RentalOrderItem {
+  id        String        @id @default(cuid())
+  sessionId String
+  snackId   String
+  qty       Int
+  price     Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  session RentalSession @relation(fields: [sessionId], references: [id])
+  snack   Snack         @relation(fields: [snackId], references: [id])
+}
+
+model Transaction {
+  id          String           @id @default(cuid())
+  type        TransactionType
+  description String
+  notes       String           @default("")
+  amount      Int
+  occurredAt  DateTime
+  sessionId   String?
+  employeeId  String?
+  createdAt   DateTime         @default(now())
+
+  session  RentalSession? @relation(fields: [sessionId], references: [id])
+  employee Employee?      @relation(fields: [employeeId], references: [id])
+}
