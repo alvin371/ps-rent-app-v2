@@ -12,7 +12,11 @@ export type Permission =
   | "payments:read"
   | "payments:write"
   | "finance:read"
-  | "transactions:read";
+  | "finance:write"
+  | "transactions:read"
+  | "transactions:write"
+  | "settings:read"
+  | "settings:write";
 
 const allPermissions: Permission[] = [
   "dashboard:read",
@@ -26,24 +30,16 @@ const allPermissions: Permission[] = [
   "payments:read",
   "payments:write",
   "finance:read",
+  "finance:write",
   "transactions:read",
+  "transactions:write",
+  "settings:read",
+  "settings:write",
 ];
 
 const rolePermissions: Record<EmployeeRole, Permission[]> = {
   Manager: allPermissions,
-  Admin: [
-    "dashboard:read",
-    "dashboard:write",
-    "devices:read",
-    "devices:write",
-    "snacks:read",
-    "snacks:write",
-    "employees:read",
-    "payments:read",
-    "payments:write",
-    "finance:read",
-    "transactions:read",
-  ],
+  Admin: allPermissions,
   Cashier: [
     "dashboard:read",
     "dashboard:write",

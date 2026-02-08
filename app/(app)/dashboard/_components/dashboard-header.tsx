@@ -1,11 +1,28 @@
-export function DashboardHeader() {
+"use client";
+
+import { BookX } from "lucide-react";
+
+type DashboardHeaderProps = {
+  onTutupBuku?: () => void;
+};
+
+export function DashboardHeader({ onTutupBuku }: DashboardHeaderProps) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-[#1f2433]">
-          Station Overview
-        </h1>
-        <p className="text-xs text-[#8a93a5]">Monday, 5 January 2026</p>
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#1f2433]">
+            Station Overview
+          </h1>
+          <p className="text-xs text-[#8a93a5]">Monday, 5 January 2026</p>
+        </div>
+        <button
+          onClick={onTutupBuku}
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#f04747] to-[#dc3545] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#f04747]/30 transition-all hover:shadow-xl hover:shadow-[#f04747]/40"
+        >
+          <BookX className="h-4 w-4" />
+          Tutup Buku
+        </button>
       </div>
       <div className="flex items-center gap-3">
         <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#e6eaf2] bg-white text-[#9aa2b1]">

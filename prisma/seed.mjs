@@ -337,32 +337,39 @@ const roles = [
   {
     name: "Admin",
     permissions: [
-      "manage_devices",
-      "manage_device_types",
-      "manage_snacks",
-      "manage_employees",
-      "view_reports",
-      "manage_payments",
+      "dashboard:read",
+      "dashboard:write",
+      "devices:read",
+      "devices:write",
+      "employees:read",
+      "employees:write",
+      "finance:read",
+      "finance:write",
+      "payments:read",
+      "payments:write",
       "transactions:read",
-      "system_settings",
+      "transactions:write",
+      "settings:read",
+      "settings:write",
     ],
   },
   {
     name: "Manager",
     permissions: [
-      "manage_devices",
-      "manage_snacks",
-      "view_reports",
-      "manage_payments",
+      "dashboard:read",
+      "dashboard:write",
+      "devices:read",
+      "devices:write",
+      "finance:read",
+      "payments:read",
       "transactions:read",
     ],
   },
   {
     name: "Cashier",
     permissions: [
-      "start_stop_timer",
-      "add_orders",
-      "collect_payments",
+      "dashboard:read",
+      "dashboard:write",
     ],
   },
 ];
@@ -441,6 +448,12 @@ async function main() {
     lastLogin: employee.lastLogin ? new Date(employee.lastLogin) : null,
   }));
 
+  // Delete in correct order to respect foreign keys
+  await prisma.transaction.deleteMany();
+  await prisma.rentalOrderItem.deleteMany();
+  await prisma.rentalSession.deleteMany();
+  await prisma.cashDrawer.deleteMany();
+  await prisma.authSession.deleteMany();
   await prisma.device.deleteMany();
   await prisma.deviceType.deleteMany();
   await prisma.snack.deleteMany();

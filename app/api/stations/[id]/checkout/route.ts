@@ -15,6 +15,13 @@ const notFound = () =>
 
 const MINUTE_MS = 60_000;
 const HOUR_MS = 3_600_000;
+const PS4_SPECIAL_RATE = 8333.33;
+const PS4_THRESHOLD_HOURS = 3;
+
+const isPS4Device = (model: string) => {
+  const normalized = model.toLowerCase().replace(/\s+/g, "");
+  return normalized.includes("playstation4") || normalized.includes("ps4");
+};
 
 const getRentalCost = (session: {
   mode: "open" | "timed";
@@ -23,13 +30,24 @@ const getRentalCost = (session: {
   durationMinutes: number | null;
   endAt: Date | null;
   stoppedAt: Date | null;
-}, now: Date) => {
-  if (session.mode === "timed") {
-    const minutes = session.durationMinutes ?? 0;
-    return Math.round((minutes * session.ratePerHour) / 60);
-  }
+}, now: Date, deviceModel: string) => {
   const stoppedAt = session.stoppedAt ?? now;
   const elapsedMs = Math.max(0, stoppedAt.getTime() - session.startAt.getTime());
+  const elapsedHours = elapsedMs / HOUR_MS;
+  
+  if (isPS4Device(deviceModel) && elapsedHours >= PS4_THRESHOLD_HOURS) {
+    return Math.round(elapsedHours * PS4_SPECIAL_RATE);
+  }
+
+  if (session.mode === "timed") {
+    const minutes = session.durationMinutes ?? 0;
+    const hours = minutes / 60;
+    if (isPS4Device(deviceModel) && hours >= PS4_THRESHOLD_HOURS) {
+      return Math.round(hours * PS4_SPECIAL_RATE);
+    }
+    return Math.round((minutes * session.ratePerHour) / 60);
+  }
+  
   return Math.round((elapsedMs * session.ratePerHour) / HOUR_MS);
 };
 
@@ -82,7 +100,8 @@ export async function POST(
         endAt,
         stoppedAt,
       },
-      now
+      now,
+      session.device.model
     );
 
     const snacksTotal = session.orders.reduce(

@@ -29,7 +29,7 @@ export function CheckoutModal({
 
   const session = station.session;
   const durationMs = getElapsedMs(session, now);
-  const rentalCost = getRentalCost(session, now);
+  const rentalCost = getRentalCost(session, now, station.model);
   const snackTotal = getOrdersSubtotal(station.orders);
   const grandTotal = rentalCost + snackTotal;
 

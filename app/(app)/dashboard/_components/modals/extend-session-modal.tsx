@@ -4,6 +4,7 @@ import {
   getDurationParts,
   getRemainingMs,
   getTimedEndAt,
+  getElapsedMs,
 } from "../billing";
 import { formatClock, formatDuration, formatRupiah } from "../format";
 
@@ -20,6 +21,14 @@ const clampValue = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 const MAX_HOURS = 24;
 
+const PS4_SPECIAL_RATE = 8333.33;
+const PS4_THRESHOLD_HOURS = 3;
+
+const isPS4Device = (model: string) => {
+  const normalized = model.toLowerCase().replace(/\s+/g, "");
+  return normalized.includes("playstation4") || normalized.includes("ps4");
+};
+
 export function ExtendSessionModal({
   station,
   now,
@@ -35,7 +44,17 @@ export function ExtendSessionModal({
 
   const endAt = getTimedEndAt(station.session);
   const remainingMs = getRemainingMs(station.session, now);
-  const additionalCost = Math.round((extendMinutes * ratePerHour) / 60);
+  const elapsedMs = getElapsedMs(station.session, now);
+  const currentTotalHours = (elapsedMs + remainingMs) / 3_600_000;
+  const newTotalHours = currentTotalHours + (extendMinutes / 60);
+  
+  const isPS4 = station.model && isPS4Device(station.model);
+  const willTriggerSpecialRate = isPS4 && currentTotalHours < PS4_THRESHOLD_HOURS && newTotalHours >= PS4_THRESHOLD_HOURS;
+  const alreadySpecialRate = isPS4 && currentTotalHours >= PS4_THRESHOLD_HOURS;
+  
+  const effectiveRate = (isPS4 && newTotalHours >= PS4_THRESHOLD_HOURS) ? PS4_SPECIAL_RATE : ratePerHour;
+  const additionalCost = Math.round((extendMinutes * effectiveRate) / 60);
+  
   const newEndAt = endAt + extendMinutes * 60_000;
   const { hours, minutes } = getDurationParts(extendMinutes);
   const isConfirmDisabled = extendMinutes <= 0;
@@ -274,6 +293,13 @@ export function ExtendSessionModal({
                 + {formatRupiah(additionalCost)}
               </span>
             </div>
+            {(willTriggerSpecialRate || alreadySpecialRate) && (
+              <div className="mt-1 text-[10px] text-[#f59e0b]">
+                {willTriggerSpecialRate 
+                  ? "⚡ PS4 Special Rate will apply (total ≥3 hours)"
+                  : "⚡ PS4 Special Rate Applied"}
+              </div>
+            )}
             <div className="mt-2 flex items-center justify-between text-[#3b82f6]">
               <span>New End Time</span>
               <span className="text-sm font-semibold text-[#1d4ed8]">

@@ -3,6 +3,7 @@ import { formatRupiah } from "../format";
 
 type StartSessionModalProps = {
   stationId: number | null;
+  deviceModel?: string;
   ratePerHour: number;
   sessionMode: SessionMode;
   onSessionModeChange: (mode: SessionMode) => void;
@@ -12,8 +13,17 @@ type StartSessionModalProps = {
   onClose: () => void;
 };
 
+const PS4_SPECIAL_RATE = 8333.33;
+const PS4_THRESHOLD_HOURS = 3;
+
+const isPS4Device = (model: string) => {
+  const normalized = model.toLowerCase().replace(/\s+/g, "");
+  return normalized.includes("playstation4") || normalized.includes("ps4");
+};
+
 export function StartSessionModal({
   stationId,
+  deviceModel,
   ratePerHour,
   sessionMode,
   onSessionModeChange,
@@ -27,7 +37,10 @@ export function StartSessionModal({
   }
 
   const durationPercent = ((durationHours - 1) / 23) * 100;
-  const totalEstimate = durationHours * ratePerHour;
+  
+  const isPS4 = deviceModel && isPS4Device(deviceModel);
+  const effectiveRate = isPS4 && durationHours >= PS4_THRESHOLD_HOURS ? PS4_SPECIAL_RATE : ratePerHour;
+  const totalEstimate = durationHours * effectiveRate;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111827]/55 px-4 py-8">
@@ -386,9 +399,14 @@ export function StartSessionModal({
                 <div className="mt-4 flex items-center justify-between text-xs text-[#8a93a5]">
                   <span>Rate per hour</span>
                   <span className="font-semibold text-[#6b7280]">
-                    {formatRupiah(ratePerHour)}
+                    {formatRupiah(effectiveRate)}
                   </span>
                 </div>
+                {isPS4 && durationHours >= PS4_THRESHOLD_HOURS && (
+                  <div className="mt-1 text-[10px] text-[#f59e0b]">
+                    ⚡ PS4 Special Rate Applied (≥3 hours)
+                  </div>
+                )}
                 <div className="mt-1 flex items-center justify-between text-sm font-semibold text-[#14b87a]">
                   <span>Total Estimate</span>
                   <span>{formatRupiah(totalEstimate)}</span>

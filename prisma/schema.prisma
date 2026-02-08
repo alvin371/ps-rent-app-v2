@@ -94,19 +94,20 @@ model Snack {
 }
 
 model Employee {
-  id            String          @id @default(cuid())
-  name          String
-  email         String          @unique
-  username      String          @unique
-  role          EmployeeRole
-  status        EmployeeStatus  @default(Active)
-  lastLogin     DateTime?
-  passwordHash  String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  authSessions  AuthSession[]
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  username       String          @unique
+  role           EmployeeRole
+  status         EmployeeStatus  @default(Active)
+  lastLogin      DateTime?
+  passwordHash   String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  authSessions   AuthSession[]
   rentalSessions RentalSession[]
-  transactions  Transaction[]
+  transactions   Transaction[]
+  cashDrawers    CashDrawer[]
 }
 
 model Payment {
@@ -118,64 +119,86 @@ model Payment {
 }
 
 model AuthSession {
-  id        String   @id @default(cuid())
+  id         String    @id @default(cuid())
   employeeId String
-  tokenHash String   @unique
-  expiresAt DateTime
-  revokedAt DateTime?
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   employee Employee @relation(fields: [employeeId], references: [id])
 }
 
 model RentalSession {
-  id             String          @id @default(cuid())
-  deviceId       String
-  employeeId     String?
-  mode           SessionMode
-  ratePerHour    Int
-  startAt        DateTime
+  id              String         @id @default(cuid())
+  deviceId        String
+  employeeId      String?
+  mode            SessionMode
+  ratePerHour     Int
+  startAt         DateTime
   durationMinutes Int?
-  endAt          DateTime?
-  stoppedAt      DateTime?
-  completedAt    DateTime?
-  paymentMethod  PaymentMethod?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  endAt           DateTime?
+  stoppedAt       DateTime?
+  completedAt     DateTime?
+  paymentMethod   PaymentMethod?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  device      Device            @relation(fields: [deviceId], references: [id])
-  employee    Employee?         @relation(fields: [employeeId], references: [id])
-  orders      RentalOrderItem[]
+  device       Device            @relation(fields: [deviceId], references: [id])
+  employee     Employee?         @relation(fields: [employeeId], references: [id])
+  orders       RentalOrderItem[]
   transactions Transaction[]
 }
 
 model RentalOrderItem {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   sessionId String
   snackId   String
   qty       Int
   price     Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   session RentalSession @relation(fields: [sessionId], references: [id])
   snack   Snack         @relation(fields: [snackId], references: [id])
 }
 
 model Transaction {
-  id          String           @id @default(cuid())
+  id          String          @id @default(cuid())
   type        TransactionType
   description String
-  notes       String           @default("")
+  notes       String          @default("")
   amount      Int
   occurredAt  DateTime
   sessionId   String?
   employeeId  String?
-  createdAt   DateTime         @default(now())
+  createdAt   DateTime        @default(now())
 
   session  RentalSession? @relation(fields: [sessionId], references: [id])
   employee Employee?      @relation(fields: [employeeId], references: [id])
+}
+
+model CashDrawer {
+  id              String    @id @default(cuid())
+  date            DateTime  @unique @db.Date
+  startingBalance Int
+  denom100k       Int       @default(0)
+  denom75k        Int       @default(0)
+  denom50k        Int       @default(0)
+  denom20k        Int       @default(0)
+  denom10k        Int       @default(0)
+  denom5k         Int       @default(0)
+  denom2k         Int       @default(0)
+  denom1k         Int       @default(0)
+  denom500        Int       @default(0)
+  denom200        Int       @default(0)
+  denom100        Int       @default(0)
+  employeeId      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  employee Employee? @relation(fields: [employeeId], references: [id])
 }

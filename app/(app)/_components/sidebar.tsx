@@ -33,19 +33,31 @@ export default function Sidebar({ user, permissions }: SidebarProps) {
       href: "/dashboard",
       icon: "grid",
       exact: true,
-      permission: "dashboard:read" as const,
+      permission: "dashboard:read" as const
+    },
+    {
+      label: "Uang Kasir",
+      href: "/uang-kasir",
+      icon: "wallet",
+      permission: "finance:read" as const
     },
     {
       label: "Dashboard Finance",
       href: "/dashboard/finance",
       icon: "chart",
-      permission: "finance:read" as const,
+      permission: "finance:read" as const
+    },
+    {
+      label: "Daily Reports",
+      href: "/daily-report",
+      icon: "clock",
+      permission: "finance:read" as const
     },
     {
       label: "Transactions",
       href: "/transactions",
       icon: "receipt",
-      permission: "transactions:read" as const,
+      permission: "transactions:read" as const
     },
     {
       label: "Devices",
@@ -61,13 +73,13 @@ export default function Sidebar({ user, permissions }: SidebarProps) {
       label: "Employees",
       href: "/employees",
       icon: "users",
-      permission: "employees:read" as const,
+      permission: "employees:read" as const
     },
     {
       label: "Payments",
       href: "/payments",
       icon: "clock",
-      permission: "payments:read" as const,
+      permission: "payments:read" as const
     },
     { label: "Settings", href: "/settings", icon: "gear" }
   ];
@@ -185,6 +197,37 @@ export default function Sidebar({ user, permissions }: SidebarProps) {
                           d="M8 8V14.4"
                           stroke="currentColor"
                           strokeWidth="1.2"
+                        />
+                      </svg>
+                    ) : null}
+                    {item.icon === "wallet" ? (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="2.5"
+                          y="4"
+                          width="11"
+                          height="9"
+                          rx="1.5"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                        />
+                        <path
+                          d="M3.5 4V3.5C3.5 2.67 4.17 2 5 2H11C11.83 2 12.5 2.67 12.5 3.5V4"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                        />
+                        <circle
+                          cx="10.5"
+                          cy="8.5"
+                          r="0.8"
+                          fill="currentColor"
                         />
                       </svg>
                     ) : null}

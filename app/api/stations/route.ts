@@ -72,6 +72,7 @@ export async function GET() {
     return {
       id: device.id,
       name: device.name,
+      model: device.model,
       status: device.status,
       ratePerHour: device.rate,
       session: session

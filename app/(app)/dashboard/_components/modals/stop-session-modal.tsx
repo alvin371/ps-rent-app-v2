@@ -37,7 +37,7 @@ export function StopSessionModal({
   const isStopped = Boolean(session.stoppedAt);
   const elapsedMs = getElapsedMs(session, now);
   const remainingMs = getRemainingMs(session, now);
-  const rentalCost = getRentalCost(session, now);
+  const rentalCost = getRentalCost(session, now, station.model);
   const snackSubtotal = getOrdersSubtotal(station.orders);
   const total = rentalCost + snackSubtotal;
   const endAt = isTimed ? getTimedEndAt(session) : session.stoppedAt ?? now;

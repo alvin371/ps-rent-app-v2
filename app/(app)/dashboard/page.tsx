@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/lib/api/client";
 import { DashboardHeader } from "./_components/dashboard-header";
@@ -10,6 +11,7 @@ import { ExtendSessionModal } from "./_components/modals/extend-session-modal";
 import { OrderModal } from "./_components/modals/order-modal";
 import { StartSessionModal } from "./_components/modals/start-session-modal";
 import { StopSessionModal } from "./_components/modals/stop-session-modal";
+import { TutupBukuModal } from "./_components/modals/tutup-buku-modal";
 import {
   getElapsedMs,
   getOrdersSubtotal,
@@ -115,6 +117,7 @@ const buildMenuTabs = (categories: string[]) => [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [stations, setStations] = useState<StationRuntime[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuTabs, setMenuTabs] = useState<{ label: string; tone: string }[]>(
@@ -136,6 +139,7 @@ export default function DashboardPage() {
     null
   );
   const [stopModalStation, setStopModalStation] = useState<number | null>(null);
+  const [tutupBukuModalOpen, setTutupBukuModalOpen] = useState(false);
   const [sessionMode, setSessionMode] = useState<SessionMode>("timed");
   const [durationHours, setDurationHours] = useState(12);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -147,6 +151,7 @@ export default function DashboardPage() {
         id: index + 1,
         deviceId: station.id,
         name: station.name,
+        model: station.model,
         status: station.status,
         ratePerHour: station.ratePerHour,
         session: station.session
@@ -449,6 +454,36 @@ export default function DashboardPage() {
     handleCloseCheckoutModal();
   };
 
+  const handleTutupBuku = async () => {
+    try {
+      const activeStations = stations.filter(
+        (s) => s.session && !s.session.stoppedAt
+      );
+
+      for (const station of activeStations) {
+        await apiFetch(`/api/stations/${station.deviceId}/stop`, {
+          method: "POST",
+        });
+        await apiFetch(`/api/stations/${station.deviceId}/checkout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentMethod: "cash" }),
+        });
+      }
+
+      router.push("/daily-report");
+    } catch (err) {
+      setLoadError(
+        err instanceof Error ? err.message : "Failed to close all stations"
+      );
+      setTutupBukuModalOpen(false);
+    }
+  };
+
+  const activeStationsCount = stations.filter(
+    (s) => s.session && !s.session.stoppedAt
+  ).length;
+
   const updateDuration = (nextValue: number) => {
     const clamped = Math.min(24, Math.max(1, nextValue));
     setDurationHours(clamped);
@@ -466,7 +501,7 @@ export default function DashboardPage() {
     const isTimed = session?.mode === "timed";
 
     const ordersSubtotal = getOrdersSubtotal(station.orders);
-    const rentalCost = session ? getRentalCost(session, now) : 0;
+    const rentalCost = session ? getRentalCost(session, now, station.model) : 0;
     const total = session ? rentalCost + ordersSubtotal : 0;
     const elapsedMs = session ? getElapsedMs(session, now) : 0;
     const remainingMs = session && isTimed ? getRemainingMs(session, now) : 0;
@@ -544,6 +579,7 @@ export default function DashboardPage() {
 
     return {
       id: station.id,
+      model: station.model,
       status: theme.status,
       statusColor: theme.statusColor,
       headerBg: theme.headerBg,
@@ -610,7 +646,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader />
+      <DashboardHeader onTutupBuku={() => setTutupBukuModalOpen(true)} />
 
       {loadError ? (
         <div className="rounded-xl border border-[#f8caca] bg-[#feecec] px-4 py-3 text-xs text-[#f04747]">
@@ -631,6 +667,12 @@ export default function DashboardPage() {
 
       <StartSessionModal
         stationId={startModalStation}
+        deviceModel={
+          startModalStation !== null
+            ? stations.find((station) => station.id === startModalStation)
+                ?.model
+            : undefined
+        }
         ratePerHour={
           startModalStation !== null
             ? stations.find((station) => station.id === startModalStation)
@@ -691,6 +733,13 @@ export default function DashboardPage() {
         now={now}
         onClose={handleCloseStopModal}
         onStopAndCheckout={handleStopAndCheckout}
+      />
+
+      <TutupBukuModal
+        isOpen={tutupBukuModalOpen}
+        activeStationsCount={activeStationsCount}
+        onConfirm={handleTutupBuku}
+        onCancel={() => setTutupBukuModalOpen(false)}
       />
     </div>
   );

@@ -21,6 +21,11 @@ export function StationCard({
           <div className="flex items-center gap-3">
             <span className="text-2xl font-semibold">{station.id}</span>
             <div>
+              {station.model && (
+                <p className="text-[10px] font-medium text-white/50">
+                  {station.model}
+                </p>
+              )}
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/60">
                 Status
               </p>

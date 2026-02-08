@@ -13,17 +13,39 @@ const badRequest = (issues: unknown) =>
 const notFound = () =>
   NextResponse.json({ error: "Snack not found" }, { status: 404 });
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await requireAuth("transactions:read");
   if (auth.response) {
     return auth.response;
   }
 
+  const url = new URL(request.url);
+  const dateParam = url.searchParams.get("date");
+
+  let whereClause = {};
+  if (dateParam) {
+    const targetDate = new Date(dateParam);
+    if (!isNaN(targetDate.getTime())) {
+      const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0);
+      const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+      whereClause = {
+        occurredAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      };
+    }
+  }
+
   const transactions = await prisma.transaction.findMany({
+    where: whereClause,
     orderBy: { occurredAt: "desc" },
     include: {
       employee: {
         select: { name: true },
+      },
+      session: {
+        select: { paymentMethod: true },
       },
     },
   });
@@ -36,6 +58,8 @@ export async function GET() {
       occurredAt: entry.occurredAt.toISOString(),
       employeeName: entry.employee?.name ?? null,
       amount: entry.amount,
+      type: entry.type,
+      paymentMethod: entry.session?.paymentMethod ?? null,
     }))
   );
 }

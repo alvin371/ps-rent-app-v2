@@ -31,6 +31,7 @@ export type StationRuntime = {
   id: number;
   deviceId: string;
   name: string;
+  model: string;
   status: "Active" | "Maintenance" | "Offline";
   ratePerHour: number;
   session: StationSession | null;
@@ -53,6 +54,7 @@ export type StationViewAction = {
 
 export type StationView = {
   id: number;
+  model?: string;
   offline?: boolean;
   status: string;
   statusColor: string;
